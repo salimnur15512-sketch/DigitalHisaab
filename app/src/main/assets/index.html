@@ -87,7 +87,6 @@ footer{text-align:center;color:var(--muted);padding:20px}
 <div id="led" class="led" style="display:none"><div class="ledhead"><div><b id="ln"></b><div id="ld"></div></div><div class="actions"><button onclick="fullLed()">⛶ फुल स्क्रीन</button><button class="red" onclick="closeLed()">✕ बंद</button></div></div><div class="ledbody"><div class="ledcards">
 <div class="ledcard"><small>आमदनी</small><strong id="li"></strong></div><div class="ledcard"><small>खर्च</small><strong id="le"></strong></div><div class="ledcard"><small>बचत</small><strong id="lb"></strong></div><div class="ledcard"><small>बकाया</small><strong id="ldue"></strong></div><div class="ledcard"><small>दाता/नाम</small><strong id="lppl"></strong></div>
 </div><div class="ledtable"><h2>हाल की आमदनी</h2><div id="lrows"></div><p style="text-align:center;color:#b7d5c5">TV/LED पर दिखाने के लिए मोबाइल की Screen Cast / Mirror सुविधा इस्तेमाल करें।</p></div></div></div></div>
-function deleteEntry(type,id){db[type]=db[type].filter(x=>String(x.id)!==String(id));persist();alert("रिकॉर्ड मिटा दिया गया है।")}
 <script>
 const K='masjid_hisab_pro_max_v1';
 let db=JSON.parse(localStorage.getItem(K)||'null')||{settings:{name:'मस्जिद / मदरसा डिजिटल हिसाब-किताब',addr:'पता दर्ज करें'},income:[],expense:[],due:[]};
