@@ -76,7 +76,6 @@ footer{text-align:center;color:var(--muted);padding:20px}
 <section id="receipt" class="page" style="display:none"><div class="panel no-print"><h2>🧾 रसीद बनाएं</h2><div class="grid">
 <div><label>तारीख</label><input id="rdate" type="date"></div><div><label>रसीद नंबर</label><input id="rno"></div><div><label>नाम</label><input id="rname"></div><div><label>रकम ₹</label><input id="ramt" type="number"></div>
 <div><label>कैटेगरी</label><select id="rcat"><option>चंदा</option><option>जकात</option><option>फितरा</option><option>दान</option><option>मदरसा फीस</option><option>अन्य</option></select></div><div class="span2"><label>विवरण</label><input id="rnote"></div><div><button onclick="makeReceipt()">🧾 रसीद तैयार</button></div></div></div><div id="receiptOut"></div></section>
-
 <section id="reports" class="page" style="display:none"><div class="panel no-print"><div class="title"><h2>📊 रिपोर्ट</h2><div class="actions"><button onclick="showAnnualReport()">📅 वार्षिक रिपोर्ट</button><button onclick="window.print()">🖨️ प्रिंट / PDF</button></div></div><div class="grid">
 <div><label>महीना</label><input id="rmonth" type="month" onchange="renderReports()"></div><div><label>नाम</label><input id="rperson" oninput="renderReports()"></div><div><label>कैटेगरी</label><select id="rcfilter" onchange="renderReports()"><option value="">सभी</option><option>चंदा</option><option>जकात</option><option>फितरा</option><option>दान</option><option>मदरसा फीस</option><option>बिजली</option><option>पानी</option><option>राशन</option><option>वेतन</option><option>मरम्मत</option><option>अन्य</option></select></div><div><label>प्रकार</label><select id="rtype" onchange="renderReports()"><option value="all">सब</option><option value="income">आमदनी</option><option value="expense">खर्च</option><option value="due">बकाया</option></select></div></div></div><div class="panel" id="reportOut"></div></section>
 
@@ -183,9 +182,6 @@ function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;',
   <div class="modal-box" style="max-width:900px;">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
       <h2>📅 वार्षिक रिपोर्ट</h2>
-      <button onclick="closeAnnualReport()">✕</button>
-    </div>
-    <div class="form-row">
       <label>वर्ष
         <select id="annualYear" onchange="renderAnnualReport()"></select>
       </label>
