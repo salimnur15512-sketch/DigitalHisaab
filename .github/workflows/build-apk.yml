@@ -14,6 +14,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: ""
+
       - name: Install Android 34 SDK
         run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
       - name: Set up Gradle
