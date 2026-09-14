@@ -52,20 +52,31 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == CREATE_BACKUP && resultCode == RESULT_OK && data != null) {
-            Uri uri = data.getData();
-            try {
-                OutputStream out = getContentResolver().openOutputStream(uri);
-                out.write(pendingBackup.getBytes("UTF-8"));
-                out.close();
+        if (requestCode == CREATE_BACKUP) {
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                Uri uri = data.getData();
+                try (OutputStream out = getContentResolver().openOutputStream(uri)) {
+                    if (out == null) throw new Exception("OutputStream null");
+
+                    byte[] bytes = pendingBackup.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                    out.write(bytes);
+                    out.flush();
+
+                    webView.evaluateJavascript(
+                        "alert('Backup सफलतापूर्वक सुरक्षित हो गया है।\\n\\nफाइल में " +
+                        bytes.length + " bytes डेटा सेव हुआ है।');", null);
+
+                } catch (Exception e) {
+                    webView.evaluateJavascript(
+                        "alert('Backup सेव नहीं हो पाया: " +
+                        e.getClass().getSimpleName() + "');", null);
+                }
+            } else {
                 webView.evaluateJavascript(
-                    "alert('Backup सफलतापूर्वक सुरक्षित हो गया है।');", null);
-            } catch (Exception e) {
-                webView.evaluateJavascript(
-                    "alert('Backup सेव नहीं हो पाया।');", null);
+                    "alert('Backup रद्द किया गया।');", null);
             }
+            pendingBackup = "";
         }
-        pendingBackup = "";
     }
 
     @Override
