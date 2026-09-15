@@ -8,13 +8,17 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.webkit.WebChromeClient;\nimport android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
+import android.webkit.ValueCallback;
+import android.webkit.ValueCallback;
 import java.io.OutputStream;
 
 public class MainActivity extends Activity {
     private WebView webView;
     private static final int CREATE_BACKUP = 1001;
-    private String pendingBackup = "";\n    private ValueCallback<Uri[]> filePathCallback;
+    private String pendingBackup = "";
+    private ValueCallback<Uri[]> filePathCallback;
+    private ValueCallback<Uri[]> filePathCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,7 +93,9 @@ public class MainActivity extends Activity {
                     out.flush();
 
                     webView.evaluateJavascript(
-                        "alert('Backup सफलतापूर्वक सुरक्षित हो गया है।\\n\\nफाइल में " +
+                        "alert('Backup सफलतापूर्वक सुरक्षित हो गया है।\
+\
+फाइल में " +
                         bytes.length + " bytes डेटा सेव हुआ है।');", null);
 
                 } catch (Exception e) {
