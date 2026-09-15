@@ -8,13 +8,13 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.webkit.WebChromeClient;
+import android.webkit.WebChromeClient;\nimport android.webkit.ValueCallback;
 import java.io.OutputStream;
 
 public class MainActivity extends Activity {
     private WebView webView;
     private static final int CREATE_BACKUP = 1001;
-    private String pendingBackup = "";
+    private String pendingBackup = "";\n    private ValueCallback<Uri[]> filePathCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,7 +30,19 @@ public class MainActivity extends Activity {
         s.setAllowContentAccess(true);
 
         webView.setWebViewClient(new WebViewClient());
-        webView.setWebChromeClient(new WebChromeClient());
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
+                Intent intent = params.createIntent();
+                try {
+                    startActivityForResult(intent, 1002);
+                } catch (Exception e) {
+                    return false;
+                }
+                filePathCallback = callback;
+                return true;
+            }
+        });
         webView.addJavascriptInterface(new BackupBridge(), "AndroidBackup");
         webView.loadUrl("file:///android_asset/index.html");
     }
@@ -53,6 +65,18 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 1002) {
+            if (filePathCallback != null) {
+                Uri[] results = null;
+                if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                    results = new Uri[]{data.getData()};
+                }
+                filePathCallback.onReceiveValue(results);
+                filePathCallback = null;
+            }
+            return;
+        }
 
         if (requestCode == CREATE_BACKUP) {
             if (resultCode == RESULT_OK && data != null && data.getData() != null) {
