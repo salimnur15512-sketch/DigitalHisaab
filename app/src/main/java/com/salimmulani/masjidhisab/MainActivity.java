@@ -10,14 +10,12 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
 import android.webkit.ValueCallback;
-import android.webkit.ValueCallback;
 import java.io.OutputStream;
 
 public class MainActivity extends Activity {
     private WebView webView;
     private static final int CREATE_BACKUP = 1001;
     private String pendingBackup = "";
-    private ValueCallback<Uri[]> filePathCallback;
     private ValueCallback<Uri[]> filePathCallback;
 
     @Override
