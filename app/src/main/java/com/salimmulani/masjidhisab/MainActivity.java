@@ -92,11 +92,7 @@ public class MainActivity extends Activity {
                     out.write(bytes);
                     out.flush();
 
-                    webView.evaluateJavascript(
-                        "alert('Backup सफलतापूर्वक सुरक्षित हो गया है।\
-\
-फाइल में " +
-                        bytes.length + " bytes डेटा सेव हुआ है।');", null);
+                webView.evaluateJavascript("alert('Backup सफलतापूर्वक सुरक्षित हो गया है।');", null);
 
                 } catch (Exception e) {
                     webView.evaluateJavascript(
