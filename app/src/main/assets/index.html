@@ -17,14 +17,13 @@ footer{text-align:center;color:var(--muted);padding:20px}
 @media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:repeat(2,1fr)}.ledcards{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){.cards,.grid,.ledcards{grid-template-columns:1fr}.span2{grid-column:auto}.topin{display:block}.actions{margin-top:9px}.actions button{flex:1}}
 @media print{.top,.tabs,.no-print{display:none!important}.wrap{max-width:none;padding:0}.panel,.hero{break-inside:avoid}.receipt{border:2px solid #000}}
 </style>
-</head>
+<script>const SUPABASE_URL="https://nkiuolrhxyopjynpmpcy.supabase.co";const SUPABASE_KEY='sb_publishable_sWakFBzLwb2n-2VInH8hqw_4DfXPlC5';const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);</script></head>
 <body>
 <div id="login" class="login"><div class="loginbox">
 <h1>🕌 हिसाब-किताब PRO MAX</h1><p>मस्जिद और मदरसा — एक ही लॉगिन, एक ही एप्लिकेशन</p>
-<label>यूज़रनेम</label><input id="lu" value="admin">
+<label>ईमेल</label><input id="lu" type="email" placeholder="ईमेल डालें">
 <label>पासवर्ड</label><input id="lp" type="password" placeholder="पासवर्ड">
 <button style="width:100%;margin-top:12px" onclick="login()">🔐 लॉगिन</button>
-<div id="lm" class="notice" style="display:none;margin-top:10px"></div><p style="font-size:13px">डेमो: admin / 1234</p>
 </div></div>
 
 <div id="app" style="display:none">
@@ -91,13 +90,62 @@ footer{text-align:center;color:var(--muted);padding:20px}
 const K='masjid_hisab_pro_max_v1';
 let db=JSON.parse(localStorage.getItem(K)||'null')||{settings:{name:'मस्जिद / मदरसा डिजिटल हिसाब-किताब',addr:'पता दर्ज करें'},income:[],expense:[],due:[]};
 const $=id=>document.getElementById(id), today=()=>new Date().toISOString().slice(0,10), money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
-function persist(){localStorage.setItem(K,JSON.stringify(db));refresh()}
-function login(){if($('lu').value==='admin'&&$('lp').value==='1234'){$('login').style.display='none';$('app').style.display='block';sessionStorage.mh='1';refresh()}else{$('lm').style.display='block';$('lm').textContent='यूज़रनेम या पासवर्ड गलत है।'}}
+function persist(){localStorage.setItem(K,JSON.stringify(db));refresh();syncCloud()}
+async function login(){const email=$('lu').value.trim();const password=$('lp').value;if(!email||!password){$('lm').style.display='block';$('lm').textContent='ईमेल और पासवर्ड डालें।';return;}const {error}=await supabaseClient.auth.signInWithPassword({email,password});if(!error){$('login').style.display='none';$('app').style.display='block';sessionStorage.mh='1';await syncCloud();await pullCloud();refresh()}else{$('lm').style.display='block';$('lm').textContent='ईमेल या पासवर्ड गलत है।';}}
 function logout(){sessionStorage.removeItem('mh');location.reload()}
 if(sessionStorage.mh){$('login').style.display='none';$('app').style.display='block'}
 function tab(id,btn){document.querySelectorAll('.page').forEach(x=>x.style.display='none');$(id).style.display='block';document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));btn?.classList.add('active');if(id==='people')renderPeople();if(id==='reports')renderReports()}
 function reset(type){let p={income:['iid','idate','iname','iamt','inote'],expense:['eid','edate','ename','eamt','enote'],due:['did','ddate','dname','damt','dnote']}[type];p.forEach((id,i)=>$(id).value=i===1?today():'')}
-function saveEntry(type){let p=type==='income'?'i':type==='expense'?'e':'d';let id=$(p+'id').value,date=$(p+'date').value,name=$(p+'name').value.trim(),cat=$(p+'cat').value,amount=Number($(p+'amt').value),note=$(p+'note').value.trim();if(!date||!name||!amount)return alert('तारीख, नाम और रकम भरें।');let x={id:id||Date.now().toString(),date,name,cat,amount,note};let a=db[type],i=a.findIndex(v=>v.id===x.id);i>=0?a[i]=x:a.push(x);persist();reset(type);alert('रिकॉर्ड सेव हो गया।')}
+async function getAccountId(){
+  const {data,error}=await supabaseClient.auth.getUser();
+  if(error||!data.user)return null;
+  const {data:m,error:e}=await supabaseClient.from('masjid_members').select('account_id').eq('user_id',data.user.id).single();
+  if(e||!m)return null;
+  return m.account_id;
+}
+
+async function syncCloud(){
+  const accountId=await getAccountId();
+  if(!accountId)return;
+  const rows=[];
+  ['income','expense','due'].forEach(type=>{
+    db[type].forEach(x=>rows.push({
+      account_id:accountId,
+      local_id:String(x.id),
+      entry_type:type,
+      entry_date:x.date,
+      person_name:x.name,
+      category:x.cat,
+      amount:x.amount,
+      note:x.note||''
+    }));
+  });
+  if(rows.length){
+    const {error}=await supabaseClient.from('hisaab_entries').upsert(rows,{onConflict:'account_id,local_id'});
+    if(error)console.log('Cloud upload error:',error);
+  }
+}
+async function pullCloud(){
+  const accountId=await getAccountId();
+  if(!accountId)return;
+  const {data,error}=await supabaseClient.from('hisaab_entries').select('*').eq('account_id',accountId);
+  if(error||!data)return;
+  db.income=[];db.expense=[];db.due=[];
+  data.forEach(x=>{
+    const type=x.entry_type;
+    if(db[type])db[type].push({
+      id:String(x.local_id||x.id),
+      date:x.entry_date,
+      name:x.person_name||'',
+      cat:x.category||'',
+      amount:Number(x.amount||0),
+      note:x.note||''
+    });
+  });
+  localStorage.setItem(K,JSON.stringify(db));
+  refresh();
+}
+function saveEntry(type){let p=type==='income'?'i':type==='expense'?'e':'d';let id=$(p+'id').value,date=$(p+'date').value,name=$(p+'name').value.trim(),cat=$(p+'cat').value,amount=Number($(p+'amt').value),note=$(p+'note').value.trim();if(!date||!name||!amount)return alert('तारीख, नाम और रकम भरें।');let x={id:id||Date.now().toString(),date,name,cat,amount,note};let a=db[type],i=a.findIndex(v=>v.id===x.id);i>=0?a[i]=x:a.push(x);persist();syncCloud();reset(type);alert('रिकॉर्ड सेव हो गया।')}
 function edit(type,id){let p=type==="income"?"i":type==="expense"?"e":"d",x=db[type].find(v=>String(v.id)===String(id));if(!x)return alert("रिकॉर्ड नहीं मिला");$(p+"id").value=x.id;$(p+"date").value=x.date;$(p+"name").value=x.name;$(p+"cat").value=x.cat;$(p+"amt").value=x.amount;$(p+"note").value=x.note||"";tab(type);scrollTo({top:0,behavior:"smooth"})}
 function del(type,id){db[type]=db[type].filter(x=>String(x.id)!==String(id));persist();alert("रिकॉर्ड मिटा दिया गया है।")}
 function clearData(){localStorage.removeItem(K);db={settings:{name:"मस्जिद / मदरसा डिजिटल हिसाब-किताब",addr:"पता दर्ज करें"},income:[],expense:[],due:[]};localStorage.setItem(K,JSON.stringify(db));refresh();alert("सारा डेटा मिटा दिया गया है।")}
