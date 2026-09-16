@@ -10,10 +10,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
 import android.webkit.ValueCallback;
-import android.print.PrintAttributes;
-import android.print.PrintManager;
-import android.print.PrintDocumentAdapter;
-import android.content.Context;
 import java.io.OutputStream;
 
 public class MainActivity extends Activity {
@@ -49,10 +45,7 @@ public class MainActivity extends Activity {
                 return true;
             }
         });
-
         webView.addJavascriptInterface(new BackupBridge(), "AndroidBackup");
-        webView.addJavascriptInterface(new PrintBridge(), "AndroidPrint");
-
         webView.loadUrl("file:///android_asset/index.html");
     }
 
@@ -68,28 +61,6 @@ public class MainActivity extends Activity {
                     new java.text.SimpleDateFormat("yyyy-MM-dd",
                     java.util.Locale.US).format(new java.util.Date()) + ".json");
             startActivityForResult(intent, CREATE_BACKUP);
-        }
-    }
-
-    public class PrintBridge {
-        @JavascriptInterface
-        public void printPage() {
-            runOnUiThread(() -> {
-                PrintManager printManager =
-                        (PrintManager) getSystemService(Context.PRINT_SERVICE);
-
-                PrintDocumentAdapter adapter =
-                        webView.createPrintDocumentAdapter("Digital-Hisaab");
-
-                PrintAttributes attributes = new PrintAttributes.Builder()
-                        .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
-                        .setResolution(new PrintAttributes.Resolution(
-                                "pdf", "PDF", 300, 300))
-                        .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
-                        .build();
-
-                printManager.print("Digital Hisaab PDF", adapter, attributes);
-            });
         }
     }
 
@@ -115,25 +86,20 @@ public class MainActivity extends Activity {
                 try (OutputStream out = getContentResolver().openOutputStream(uri)) {
                     if (out == null) throw new Exception("OutputStream null");
 
-                    byte[] bytes = pendingBackup.getBytes(
-                            java.nio.charset.StandardCharsets.UTF_8);
+                    byte[] bytes = pendingBackup.getBytes(java.nio.charset.StandardCharsets.UTF_8);
                     out.write(bytes);
                     out.flush();
 
-                    webView.evaluateJavascript(
-                            "alert('Backup सफलतापूर्वक सुरक्षित हो गया है।');",
-                            null);
+                webView.evaluateJavascript("alert('Backup सफलतापूर्वक सुरक्षित हो गया है।');", null);
 
                 } catch (Exception e) {
                     webView.evaluateJavascript(
-                            "alert('Backup सेव नहीं हो पाया: " +
-                            e.getClass().getSimpleName() + "');",
-                            null);
+                        "alert('Backup सेव नहीं हो पाया: " +
+                        e.getClass().getSimpleName() + "');", null);
                 }
             } else {
                 webView.evaluateJavascript(
-                        "alert('Backup रद्द किया गया।');",
-                        null);
+                    "alert('Backup रद्द किया गया।');", null);
             }
             pendingBackup = "";
         }

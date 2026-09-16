@@ -1,0 +1,5 @@
+plugins { id 'com.android.application' }
+
+android { namespace 'com.salimmulani.masjidhisab'; compileSdk 34
+    defaultConfig { applicationId 'com.salimmulani.masjidhisab.test'; minSdk 23; targetSdk 34; versionCode 1; versionName '1.0' }
+}
